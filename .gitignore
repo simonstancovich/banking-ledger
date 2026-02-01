@@ -18,7 +18,7 @@ out/
 *.tsbuildinfo
 
 # Prisma
-apps/api/generated/
+# Prisma Client is generated to node_modules/.prisma/client (automatically ignored via node_modules/)
 *.db
 *.db-journal
 
@@ -37,7 +37,8 @@ coverage/
 *.lcov
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo

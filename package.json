@@ -1,4 +1,7 @@
 {
+  "dependencies": {
+    "@nestjs/mapped-types": "*"
+  },
   "name": "banking-ledger",
   "version": "1.0.0",
   "description": "",
@@ -9,7 +12,8 @@
     "prisma:migrate": "pnpm --filter api exec prisma migrate dev",
     "prisma:studio": "pnpm --filter api exec prisma studio",
     "prisma:push": "pnpm --filter api exec prisma db push",
-    "prisma:pull": "pnpm --filter api exec prisma db pull"
+    "prisma:pull": "pnpm --filter api exec prisma db pull",
+    "prisma:generate-resources": "pnpm --filter api prisma:generate-resources"
   },
   "keywords": [],
   "author": "",
