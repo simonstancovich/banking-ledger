@@ -1,0 +1,22 @@
+{
+  "name": "banking-ledger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma:generate": "pnpm --filter api exec prisma generate",
+    "prisma:migrate": "pnpm --filter api exec prisma migrate dev",
+    "prisma:studio": "pnpm --filter api exec prisma studio",
+    "prisma:push": "pnpm --filter api exec prisma db push",
+    "prisma:pull": "pnpm --filter api exec prisma db pull"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.28.2",
+  "devDependencies": {
+    "turbo": "^2.8.1",
+    "typescript": "^5.9.3"
+  }
+}
