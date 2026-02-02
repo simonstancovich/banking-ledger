@@ -1,10 +1,12 @@
 import {
   Controller,
   Post,
+  Get,
   Version,
   UseGuards,
   UseInterceptors,
   Req,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -89,6 +91,25 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async login(@Req() req: AuthedRequest): Promise<GetOrCreateUserResponseDto> {
+    return this.handleAuthentication(req);
+  }
+
+  @Get('me')
+  @Version('1')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description:
+      'Returns the current authenticated user profile based on Firebase token',
+  })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: GetOrCreateUserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
+  async getMe(@Request() req: AuthedRequest): Promise<GetOrCreateUserResponseDto> {
     return this.handleAuthentication(req);
   }
 }

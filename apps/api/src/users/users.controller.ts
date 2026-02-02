@@ -72,6 +72,24 @@ export class UsersController {
     return res.status(statusCode).json(result);
   }
 
+  @Get('me')
+  @Version('1')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Returns the current authenticated user profile based on Firebase token',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: GetOrCreateUserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
+  async getMe(@Request() req: AuthedRequest): Promise<GetOrCreateUserResponseDto> {
+    const { firebaseUid, email } = req.user;
+    return await this.usersService.getOrCreateUser(firebaseUid, email);
+  }
+
   @Get()
   @Version('1')
   @ApiOperation({ summary: 'Get all users' })

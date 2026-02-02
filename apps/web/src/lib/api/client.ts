@@ -56,9 +56,7 @@ export interface ApiClientConfig {
  * @returns Extracted data
  * @internal
  */
-const defaultExtractData = <T>(
-  response: AxiosResponse<ApiResponse<T>>,
-): T => {
+const defaultExtractData = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
   const data = response.data;
   return data && typeof data === 'object' && 'data' in data
     ? (data.data as T)
@@ -67,10 +65,10 @@ const defaultExtractData = <T>(
 
 /**
  * Creates a configured API client instance with authentication and error handling
- * 
+ *
  * @param config - API client configuration
  * @returns Configured API client with HTTP methods (get, post, put, patch, delete)
- * 
+ *
  * @example
  * ```typescript
  * const api = createApiClient({
@@ -102,7 +100,7 @@ export const createApiClient = (config: ApiClientConfig) => {
   const redirectToLogin = async () => {
     if (typeof window !== 'undefined' && !isRedirecting) {
       isRedirecting = true;
-      
+
       // Wait for onUnauthorized callback to complete before redirecting
       if (onUnauthorized) {
         try {
@@ -111,9 +109,9 @@ export const createApiClient = (config: ApiClientConfig) => {
           console.error('Error in onUnauthorized callback:', error);
         }
       }
-      
+
       window.location.href = loginPath;
-      
+
       setTimeout(() => {
         isRedirecting = false;
       }, 2000);
@@ -163,7 +161,9 @@ export const createApiClient = (config: ApiClientConfig) => {
       // Dev mode logging
       if (enableDevLogging) {
         console.log(
-          `[API Request] ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`,
+          `[API Request] ${requestConfig.method?.toUpperCase()} ${
+            requestConfig.url
+          }`,
           {
             baseURL: requestConfig.baseURL,
             headers: {
@@ -197,7 +197,9 @@ export const createApiClient = (config: ApiClientConfig) => {
       // Dev mode logging
       if (enableDevLogging) {
         console.log(
-          `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`,
+          `[API Response] ${
+            response.status
+          } ${response.config.method?.toUpperCase()} ${response.config.url}`,
           {
             data: response.data,
             headers: response.headers,
@@ -210,7 +212,9 @@ export const createApiClient = (config: ApiClientConfig) => {
       // Dev mode logging for errors
       if (enableDevLogging) {
         console.error(
-          `[API Error] ${error.response?.status || 'NO_RESPONSE'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+          `[API Error] ${
+            error.response?.status || 'NO_RESPONSE'
+          } ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
           {
             response: error.response?.data,
             request: error.request,
@@ -228,26 +232,33 @@ export const createApiClient = (config: ApiClientConfig) => {
         switch (status) {
           case 401:
             if (typeof window !== 'undefined') {
-              // Try to refresh token first
+              const config = error.config as AxiosRequestConfig & {
+                __retried401?: boolean;
+              };
+
+              // Only attempt token refresh once per request to avoid infinite retry loops
+              if (config?.__retried401) {
+                showToast('Session expired, please login again');
+                setTimeout(() => redirectToLogin(), 500);
+                break;
+              }
+
               const user = await authProvider.getCurrentUser();
 
-              if (user && error.config) {
+              if (user && config) {
                 try {
-                  // Force token refresh
+                  config.__retried401 = true;
                   const newToken = await user.getIdToken(true);
 
-                  // Retry the original request with new token
-                  // Properly clone config with headers
-                  const originalRequest = {
-                    ...error.config,
+                  const retryConfig = {
+                    ...config,
                     headers: {
-                      ...error.config.headers,
+                      ...config.headers,
                       Authorization: `Bearer ${newToken}`,
                     },
                   };
 
-                  // Retry the request
-                  return apiClient.request(originalRequest);
+                  return apiClient.request(retryConfig);
                 } catch (refreshError) {
                   // Token refresh failed - sign out and redirect
                   console.error('Token refresh failed:', refreshError);
@@ -280,16 +291,16 @@ export const createApiClient = (config: ApiClientConfig) => {
             }
             break;
           case 403:
-            console.error('Forbidden - insufficient permissions');
-            showToast('Forbidden - insufficient permissions');
+            console.error('Forbidden - insufficient permissions', data);
+            showToast(data?.message ?? 'Forbidden - insufficient permissions');
             break;
           case 404:
-            console.error('Resource not found');
-            showToast('Resource not found');
+            console.error('Resource not found', data);
+            showToast(data?.message ?? 'Resource not found');
             break;
           case 500:
-            console.error('Server error');
-            showToast('Server error');
+            console.error('Server error', data);
+            showToast(data?.message ?? 'Server error');
             break;
           default:
             console.error(`API Error: ${status}`, data);
@@ -342,7 +353,7 @@ export const createApiClient = (config: ApiClientConfig) => {
      * @param url - API endpoint (relative to baseURL)
      * @param requestConfig - Optional axios request configuration
      * @returns Promise resolving to response data
-     * 
+     *
      * @example
      * ```typescript
      * const user = await api.get<User>('/users/123');
@@ -363,7 +374,7 @@ export const createApiClient = (config: ApiClientConfig) => {
      * @param data - Request payload
      * @param requestConfig - Optional axios request configuration
      * @returns Promise resolving to response data
-     * 
+     *
      * @example
      * ```typescript
      * const newUser = await api.post<User>('/users', { name: 'John' });
@@ -445,7 +456,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     /**
      * Raw axios instance for advanced use cases
      * Use this when you need direct access to axios features
-     * 
+     *
      * @example
      * ```typescript
      * const response = await api.client.get('/endpoint', {
@@ -462,10 +473,10 @@ export const createApiClient = (config: ApiClientConfig) => {
 /**
  * Creates a Firebase Auth provider adapter
  * Convenience function for Firebase Authentication integration
- * 
+ *
  * @param firebaseAuth - Firebase Auth instance with currentUser and signOut
  * @returns AuthProvider compatible with createApiClient
- * 
+ *
  * @example
  * ```typescript
  * import { getAuth } from 'firebase/auth';
@@ -473,9 +484,12 @@ export const createApiClient = (config: ApiClientConfig) => {
  * const provider = createFirebaseAuthProvider(auth);
  * ```
  */
-export const createFirebaseAuthProvider = (
-  firebaseAuth: { currentUser: { getIdToken: (forceRefresh?: boolean) => Promise<string> } | null; signOut: () => Promise<void> },
-): AuthProvider => {
+export const createFirebaseAuthProvider = (firebaseAuth: {
+  currentUser: {
+    getIdToken: (forceRefresh?: boolean) => Promise<string>;
+  } | null;
+  signOut: () => Promise<void>;
+}): AuthProvider => {
   return {
     getCurrentUser: async () => {
       return firebaseAuth.currentUser;
@@ -492,8 +506,7 @@ const firebaseAuthProvider = createFirebaseAuthProvider(auth);
 
 export const api = createApiClient({
   baseURL:
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:3000/api/v1',
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1',
   authProvider: firebaseAuthProvider,
   toastProvider: {
     error: toastError,
