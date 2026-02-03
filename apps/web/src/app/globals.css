@@ -1,29 +1,258 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* NProgress styles */
+/* ═══════════════════════════════════════════════════════════════════
+   Banking Ledger — 2026 Design System
+   Warm stone + muted teal. No corporate blue, no cold gray.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* 2026 modern UI — Warm stone + muted teal (no corporate blue) */
+  --color-bank-primary: #1c1917;
+  --color-bank-primary-hover: #292524;
+  --color-bank-primary-muted: #44403c;
+  --color-bank-accent: #0d9488;
+  --color-bank-accent-soft: #14b8a6;
+
+  /* Semantic — Soft, readable */
+  --color-bank-success: #059669;
+  --color-bank-success-soft: #10b981;
+  --color-bank-warning: #b45309;
+  --color-bank-warning-soft: #d97706;
+  --color-bank-error: #b91c1c;
+  --color-bank-error-soft: #dc2626;
+
+  /* Neutrals — Warm stone/cream (not cold gray) */
+  --color-bank-surface: #fafaf9;
+  --color-bank-surface-elevated: #ffffff;
+  --color-bank-border: #e7e5e4;
+  --color-bank-border-subtle: #f5f5f4;
+  --color-bank-text: #1c1917;
+  --color-bank-text-secondary: #44403c;
+  --color-bank-text-muted: #78716c;
+  --color-bank-text-inverse: #fafaf9;
+
+  /* Depth — Softer, warmer shadows */
+  --shadow-bank-sm: 0 1px 2px 0 rgb(28 25 23 / 0.04);
+  --shadow-bank-md: 0 4px 6px -1px rgb(28 25 23 / 0.05),
+    0 2px 4px -2px rgb(28 25 23 / 0.03);
+  --shadow-bank-lg: 0 10px 15px -3px rgb(28 25 23 / 0.06),
+    0 4px 6px -4px rgb(28 25 23 / 0.03);
+  --shadow-bank-xl: 0 20px 25px -5px rgb(28 25 23 / 0.06),
+    0 8px 10px -6px rgb(28 25 23 / 0.03);
+  --shadow-bank-inner: inset 0 2px 4px 0 rgb(28 25 23 / 0.03);
+
+  /* Radius — Modern, soft corners */
+  --radius-bank-sm: 6px;
+  --radius-bank-md: 10px;
+  --radius-bank-lg: 14px;
+  --radius-bank-xl: 18px;
+  --radius-bank-full: 9999px;
+
+  /* Typography */
+  --font-bank-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-bank-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Base layer — Light mode (default) */
+:root {
+  --bg-page: var(--color-bank-surface);
+  --bg-card: var(--color-bank-surface-elevated);
+  --text-primary: var(--color-bank-text);
+  --text-secondary: var(--color-bank-text-secondary);
+  --text-muted: var(--color-bank-text-muted);
+  --border-default: var(--color-bank-border);
+  --nprogress-color: var(--color-bank-accent);
+}
+
+/* Dark mode — Warm charcoal (not blue-black) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bank-surface: #0c0a09;
+    --color-bank-surface-elevated: #1c1917;
+    --color-bank-border: #292524;
+    --color-bank-border-subtle: #1c1917;
+    --color-bank-text: #fafaf9;
+    --color-bank-text-secondary: #a8a29e;
+    --color-bank-text-muted: #78716c;
+    --color-bank-accent: #2dd4bf;
+    --color-bank-accent-soft: #5eead4;
+    --color-bank-primary: #fafaf9;
+    --color-bank-primary-hover: #f5f5f4;
+    --color-bank-text-inverse: #1c1917;
+
+    --shadow-bank-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-bank-md: 0 4px 6px -1px rgb(0 0 0 / 0.2),
+      0 2px 4px -2px rgb(0 0 0 / 0.12);
+    --shadow-bank-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2),
+      0 4px 6px -4px rgb(0 0 0 / 0.12);
+  }
+
+  :root {
+    --bg-page: var(--color-bank-surface);
+    --bg-card: var(--color-bank-surface-elevated);
+    --text-primary: var(--color-bank-text);
+    --text-secondary: var(--color-bank-text-secondary);
+    --text-muted: var(--color-bank-text-muted);
+    --border-default: var(--color-bank-border);
+  }
+}
+
+/* Base styles */
+@layer base {
+  html {
+    font-family: var(--font-bank-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* Form inputs — banking-appropriate styling */
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-bank-text-muted);
+  }
+
+  /* Focus rings — accessible, on-brand */
+  *:focus-visible {
+    outline: 2px solid var(--color-bank-accent);
+    outline-offset: 2px;
+  }
+
+  /* Links */
+  a {
+    color: var(--color-bank-accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  a:hover {
+    color: var(--color-bank-accent-soft);
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--color-bank-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-bank-sm);
+  }
+}
+
+/* Component utilities — use with Tailwind or as standalone */
+@layer components {
+  /* Banking card — elevated surface with subtle shadow */
+  .bank-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-bank-lg);
+    box-shadow: var(--shadow-bank-md);
+    border: 1px solid var(--border-default);
+  }
+
+  /* Form input — consistent banking input style */
+  .bank-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-bank-md);
+    box-shadow: var(--shadow-bank-inner);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .bank-input:hover {
+    border-color: var(--color-bank-text-muted);
+  }
+
+  .bank-input:focus {
+    border-color: var(--color-bank-accent);
+    box-shadow: 0 0 0 3px rgb(13 148 136 / 0.12);
+  }
+
+  /* Primary button — CTA style */
+  .bank-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-bank-text-inverse);
+    background: var(--color-bank-primary);
+    border: none;
+    border-radius: var(--radius-bank-md);
+    box-shadow: var(--shadow-bank-sm);
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease,
+      transform 0.1s ease;
+  }
+
+  .bank-btn-primary:hover {
+    background: var(--color-bank-primary-hover);
+    box-shadow: var(--shadow-bank-md);
+  }
+
+  .bank-btn-primary:active {
+    transform: translateY(1px);
+  }
+
+  /* Secondary / ghost button */
+  .bank-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-bank-md);
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .bank-btn-secondary:hover {
+    color: var(--text-primary);
+    border-color: var(--color-bank-text-muted);
+  }
+}
+
+/* NProgress — brand-aligned loading bar */
 #nprogress {
   pointer-events: none;
 }
 
 #nprogress .bar {
-  background: #000000;
+  background: var(--nprogress-color) !important;
   position: fixed;
   z-index: 1031;
   top: 0;
   left: 0;
   width: 100%;
-  height: 2px;
+  height: 3px;
+  box-shadow: 0 0 10px var(--nprogress-color), 0 0 5px var(--nprogress-color);
 }
 
 #nprogress .peg {
   display: block;
   position: absolute;
-  right: 0px;
+  right: 0;
   width: 100px;
   height: 100%;
-  box-shadow: 0 0 10px #000000, 0 0 5px #000000;
+  box-shadow: 0 0 10px var(--nprogress-color), 0 0 5px var(--nprogress-color);
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
 }

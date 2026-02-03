@@ -77,7 +77,8 @@ export class UsersController {
   @UseGuards(FirebaseAuthGuard)
   @ApiOperation({
     summary: 'Get current user profile',
-    description: 'Returns the current authenticated user profile based on Firebase token',
+    description:
+      'Returns the current authenticated user profile based on Firebase token',
   })
   @ApiResponse({
     status: 200,
@@ -85,46 +86,10 @@ export class UsersController {
     type: GetOrCreateUserResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
-  async getMe(@Request() req: AuthedRequest): Promise<GetOrCreateUserResponseDto> {
+  async getMe(
+    @Request() req: AuthedRequest,
+  ): Promise<GetOrCreateUserResponseDto> {
     const { firebaseUid, email } = req.user;
     return await this.usersService.getOrCreateUser(firebaseUid, email);
-  }
-
-  @Get()
-  @Version('1')
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'List of all users' })
-  findAll() {
-    return this.usersService.findAll();
-  }
-
-  @Get(':id')
-  @Version('1')
-  @ApiOperation({ summary: 'Get user by ID' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User found' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
-  }
-
-  @Patch(':id')
-  @Version('1')
-  @ApiOperation({ summary: 'Update user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User updated' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  @Version('1')
-  @ApiOperation({ summary: 'Delete user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User deleted' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
   }
 }

@@ -12,9 +12,15 @@ if (existsSync(rootEnvPath)) {
 }
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // Environment variables with NEXT_PUBLIC_ prefix will be available in the browser
-  // They can be defined in root .env file
+  // Proxy /api/v1 to Nest so relative NEXT_PUBLIC_API_BASE_URL works and no 404 on same-origin API path
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: 'http://localhost:3001/api/v1/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

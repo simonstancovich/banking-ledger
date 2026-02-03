@@ -19,17 +19,17 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toastSuccess('Login successful!', { description: 'Redirecting...' });
-      r.push('/app');
+      r.replace('/dashboard');
     } catch (error) {
       const firebaseError = error as { code?: string; message?: string };
       const errorMessage =
         firebaseError.code === 'auth/invalid-credential'
           ? 'Invalid email or password'
           : firebaseError.code === 'auth/user-not-found'
-            ? 'User not found'
-            : firebaseError.code === 'auth/wrong-password'
-              ? 'Incorrect password'
-              : 'Login failed. Please try again.';
+          ? 'User not found'
+          : firebaseError.code === 'auth/wrong-password'
+          ? 'Incorrect password'
+          : 'Login failed. Please try again.';
       toastError(errorMessage);
     } finally {
       setLoading(false);

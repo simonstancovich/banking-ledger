@@ -7,6 +7,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"pnpm --filter api start:dev\" \"pnpm --filter web dev\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
@@ -22,6 +23,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.28.2",
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "@typescript-eslint/parser": "^5.0.1",
     "eslint": "^8.7.0",
     "prettier": "^2.5.1",

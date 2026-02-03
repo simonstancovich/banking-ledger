@@ -22,7 +22,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
-    "prisma:generate-resources": "prisma g resources"
+    "prisma:generate-resources": "prisma g resources",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
