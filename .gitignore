@@ -19,6 +19,7 @@ out/
 
 # Prisma
 # Prisma Client is generated to node_modules/.prisma/client (automatically ignored via node_modules/)
+apps/api/src/generated/
 *.db
 *.db-journal
 
