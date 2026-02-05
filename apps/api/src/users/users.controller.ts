@@ -31,12 +31,12 @@ import {
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
 @Controller('users')
+@UseGuards(FirebaseAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('me')
   @Version('1')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({
     summary: 'Get or create user from Firebase token',
     description:
@@ -53,7 +53,6 @@ export class UsersController {
     type: GetOrCreateUserResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
   async getOrCreateUser(
     @Request() req: AuthedRequestGuarded,
     @Res() res: Response,
@@ -69,7 +68,6 @@ export class UsersController {
 
   @Get('me')
   @Version('1')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({
     summary: 'Get current user profile',
     description:
@@ -83,20 +81,21 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
   async getMe(
     @Request() req: AuthedRequestGuarded,
-  ): Promise<GetOrCreateUserResponseDto> {
+    @Res() res: Response,
+  ): Promise<Response> {
     const { firebaseUid, email } = req.user;
-    return await this.usersService.getOrCreateUser(firebaseUid, email);
+    const result = await this.usersService.getOrCreateUser(firebaseUid, email);
+    const statusCode = result.created ? HttpStatus.CREATED : HttpStatus.OK;
+    return res.status(statusCode).json(result);
   }
 
   @Get()
   @Version('1')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({
     summary: 'List all users (admin only)',
     description:
       'Returns a paginated list of users. Supports page, limit, sortBy, and sortOrder query params.',
   })
-  @ApiBearerAuth('JWT-auth')
   @ApiResponse({
     status: 200,
     description: 'Paginated list of users',
@@ -116,12 +115,10 @@ export class UsersController {
 
   @Get(':id')
   @Version('1')
-  @UseGuards(FirebaseAuthGuard)
   @ApiOperation({
     summary: 'Get user by ID',
     description: 'Returns the user profile by ID',
   })
-  @ApiBearerAuth('JWT-auth')
   @ApiResponse({
     status: 200,
     description: 'User profile retrieved successfully',
