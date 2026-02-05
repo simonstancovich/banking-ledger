@@ -2,10 +2,8 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
   Param,
-  Delete,
+  Query,
   Version,
   UseGuards,
   Request,
@@ -17,21 +15,18 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { GetUserDto } from './dto/get-user.dto';
+import { GetAllUsersQueryDto } from './dto/get-all-users-query.dto';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import type { AuthedRequestGuarded } from '../auth/firebase-auth.guard';
 import {
-  AuthedRequestUser,
-  FirebaseAuthGuard,
-} from '../auth/firebase-auth.guard';
-import { GetOrCreateUserResponseDto } from './dto/user-response.dto';
-import { Request as ExpressRequest } from 'express';
-
-interface AuthedRequest extends ExpressRequest {
-  user: AuthedRequestUser;
-}
+  GetOrCreateUserResponseDto,
+  GetUserResponseDto,
+  GetAllUsersResponseDto,
+} from './dto/user-response.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -60,7 +55,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getOrCreateUser(
-    @Request() req: AuthedRequest,
+    @Request() req: AuthedRequestGuarded,
     @Res() res: Response,
   ): Promise<Response> {
     const { firebaseUid, email } = req.user;
@@ -87,9 +82,61 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
   async getMe(
-    @Request() req: AuthedRequest,
+    @Request() req: AuthedRequestGuarded,
   ): Promise<GetOrCreateUserResponseDto> {
     const { firebaseUid, email } = req.user;
     return await this.usersService.getOrCreateUser(firebaseUid, email);
+  }
+
+  @Get()
+  @Version('1')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({
+    summary: 'List all users (admin only)',
+    description:
+      'Returns a paginated list of users. Supports page, limit, sortBy, and sortOrder query params.',
+  })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of users',
+    type: GetAllUsersResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin only',
+  })
+  async getAllUsers(
+    @Request() req: AuthedRequestGuarded,
+    @Query() query: GetAllUsersQueryDto,
+  ): Promise<GetAllUsersResponseDto> {
+    return await this.usersService.getAllUsers(req.user, query);
+  }
+
+  @Get(':id')
+  @Version('1')
+  @UseGuards(FirebaseAuthGuard)
+  @ApiOperation({
+    summary: 'Get user by ID',
+    description: 'Returns the user profile by ID',
+  })
+  @ApiBearerAuth('JWT-auth')
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: GetUserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUser(
+    @Request() req: AuthedRequestGuarded,
+    @Param() params: GetUserDto,
+  ): Promise<GetUserResponseDto> {
+    return await this.usersService.getUser(params.id, req.user);
   }
 }

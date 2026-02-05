@@ -92,6 +92,7 @@ export interface AuthProvider {
 ```
 
 **Requirements:**
+
 - `getCurrentUser()`: Must return a user object with `getIdToken()` method, or `null` if not authenticated
 - `getIdToken(forceRefresh?)`: Must return a JWT token string
 - `signOut()`: Must sign out the current user
@@ -111,6 +112,7 @@ export interface ToastProvider {
 ### Firebase Authentication
 
 **Requirements:**
+
 - Firebase Auth SDK installed
 - Firebase project configured
 
@@ -126,7 +128,8 @@ const firebaseAuth = getAuth();
 const authProvider = createFirebaseAuthProvider(firebaseAuth);
 
 export const api = createApiClient({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1',
+  baseURL:
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1',
   authProvider,
   loginPath: '/login',
 });
@@ -153,6 +156,7 @@ const firebaseAuthProvider: AuthProvider = {
 ### Auth0
 
 **Requirements:**
+
 - `@auth0/auth0-spa-js` installed
 
 **Implementation:**
@@ -167,7 +171,7 @@ const { getAccessTokenSilently, logout, user } = useAuth0();
 const auth0Provider: AuthProvider = {
   getCurrentUser: async () => {
     if (!user) return null;
-    
+
     return {
       getIdToken: async (forceRefresh = false) => {
         return await getAccessTokenSilently({
@@ -191,6 +195,7 @@ export const api = createApiClient({
 ### JWT with LocalStorage/SessionStorage
 
 **Requirements:**
+
 - Token stored in localStorage/sessionStorage
 - Token refresh endpoint (optional)
 
@@ -203,9 +208,9 @@ const jwtProvider: AuthProvider = {
   getCurrentUser: async () => {
     const token = localStorage.getItem('authToken');
     const refreshToken = localStorage.getItem('refreshToken');
-    
+
     if (!token) return null;
-    
+
     return {
       getIdToken: async (forceRefresh = false) => {
         if (forceRefresh && refreshToken) {
@@ -215,14 +220,14 @@ const jwtProvider: AuthProvider = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refreshToken }),
           });
-          
+
           if (response.ok) {
             const { token: newToken } = await response.json();
             localStorage.setItem('authToken', newToken);
             return newToken;
           }
         }
-        
+
         return token;
       },
     };
@@ -244,6 +249,7 @@ export const api = createApiClient({
 ### Supabase
 
 **Requirements:**
+
 - `@supabase/supabase-js` installed
 
 **Implementation:**
@@ -256,14 +262,18 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const supabaseProvider: AuthProvider = {
   getCurrentUser: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session) return null;
-    
+
     return {
       getIdToken: async (forceRefresh = false) => {
         if (forceRefresh) {
-          const { data: { session: newSession } } = await supabase.auth.refreshSession();
+          const {
+            data: { session: newSession },
+          } = await supabase.auth.refreshSession();
           return newSession?.access_token || session.access_token;
         }
         return session.access_token;
@@ -285,6 +295,7 @@ export const api = createApiClient({
 ### NextAuth.js
 
 **Requirements:**
+
 - `next-auth` installed and configured
 
 **Implementation:**
@@ -296,9 +307,9 @@ import { AuthProvider } from '@/lib/api/client';
 const nextAuthProvider: AuthProvider = {
   getCurrentUser: async () => {
     const session = await getSession();
-    
+
     if (!session?.accessToken) return null;
-    
+
     return {
       getIdToken: async () => {
         return session.accessToken as string;
@@ -328,11 +339,11 @@ const customOAuthProvider: AuthProvider = {
   getCurrentUser: async () => {
     // Check if user is authenticated
     const token = getTokenFromStorage(); // Your token storage logic
-    
+
     if (!token || isTokenExpired(token)) {
       return null;
     }
-    
+
     return {
       getIdToken: async (forceRefresh = false) => {
         if (forceRefresh) {
@@ -365,16 +376,16 @@ export const api = createApiClient({
 ```typescript
 export interface ApiClientConfig {
   // Required
-  baseURL: string;                    // API base URL
-  authProvider: AuthProvider;         // Authentication provider
+  baseURL: string; // API base URL
+  authProvider: AuthProvider; // Authentication provider
 
   // Optional
-  timeout?: number;                   // Request timeout in ms (default: 30000)
-  toastProvider?: ToastProvider;      // Toast notification system
-  loginPath?: string;                 // Login redirect path (default: '/login')
+  timeout?: number; // Request timeout in ms (default: 30000)
+  toastProvider?: ToastProvider; // Toast notification system
+  loginPath?: string; // Login redirect path (default: '/login')
   onUnauthorized?: () => void | Promise<void>; // Custom unauthorized handler (awaited before redirect)
   responseExtractor?: <T>(response: AxiosResponse<ApiResponse<T>>) => T; // Custom response extractor
-  enableDevLogging?: boolean;         // Enable dev logging (default: NODE_ENV === 'development')
+  enableDevLogging?: boolean; // Enable dev logging (default: NODE_ENV === 'development')
 }
 ```
 
@@ -542,7 +553,7 @@ try {
   const data = await api.get('/endpoint');
 } catch (error) {
   const apiError = error as ApiError;
-  
+
   switch (apiError.code) {
     case 'TIMEOUT_ERROR':
       // Handle timeout
@@ -554,7 +565,7 @@ try {
       // Handle request error
       break;
     default:
-      // Handle other errors
+    // Handle other errors
   }
 }
 ```
@@ -638,10 +649,12 @@ export const api = createApiClient({
 ### Minimum Requirements
 
 1. **AuthProvider Implementation**
+
    - Must implement `getCurrentUser()` returning user with `getIdToken()` or `null`
    - Must implement `signOut()` for cleanup
 
 2. **Token Format**
+
    - Tokens must be JWT strings
    - `getIdToken()` must return a Promise<string>
 
@@ -668,7 +681,7 @@ const authProvider: AuthProvider = {
   getCurrentUser: async () => {
     const user = await getMyUser();
     if (!user) return null;
-    
+
     // ✅ Must return object with getIdToken
     return {
       getIdToken: async () => user.token,

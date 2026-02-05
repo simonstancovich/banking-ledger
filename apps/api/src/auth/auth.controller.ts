@@ -14,15 +14,11 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { FirebaseAuthGuard, AuthedRequestUser } from './firebase-auth.guard';
+import { FirebaseAuthGuard } from './firebase-auth.guard';
+import type { AuthedRequestGuarded } from './firebase-auth.guard';
 import { UsersService } from '../users/users.service';
 import { GetOrCreateUserResponseDto } from '../users/dto/user-response.dto';
-import { Request as ExpressRequest } from 'express';
 import { AuthResponseInterceptor } from './auth-response.interceptor';
-
-interface AuthedRequest extends ExpressRequest {
-  user: AuthedRequestUser;
-}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,7 +30,7 @@ export class AuthController {
    * Extracts user from request and calls service
    */
   private async handleAuthentication(
-    req: AuthedRequest,
+    req: AuthedRequestGuarded,
   ): Promise<GetOrCreateUserResponseDto> {
     const { firebaseUid, email } = req.user;
     return this.usersService.getOrCreateUser(firebaseUid, email);
@@ -63,7 +59,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async register(
-    @Req() req: AuthedRequest,
+    @Req() req: AuthedRequestGuarded,
   ): Promise<GetOrCreateUserResponseDto> {
     return this.handleAuthentication(req);
   }
@@ -90,7 +86,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async login(@Req() req: AuthedRequest): Promise<GetOrCreateUserResponseDto> {
+  async login(
+    @Req() req: AuthedRequestGuarded,
+  ): Promise<GetOrCreateUserResponseDto> {
     return this.handleAuthentication(req);
   }
 
@@ -109,7 +107,9 @@ export class AuthController {
     type: GetOrCreateUserResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid token' })
-  async getMe(@Request() req: AuthedRequest): Promise<GetOrCreateUserResponseDto> {
+  async getMe(
+    @Request() req: AuthedRequestGuarded,
+  ): Promise<GetOrCreateUserResponseDto> {
     return this.handleAuthentication(req);
   }
 }

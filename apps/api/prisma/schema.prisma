@@ -8,16 +8,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          String   @id @default(cuid())
-  firebaseUid String   @unique
-  email       String   @unique
-  role        Role     @default(USER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
 enum Role {
   USER
   ADMIN
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  OTHER
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  OTHER
+}
+
+model User {
+  id          String    @id @default(cuid())
+  firebaseUid String    @unique
+  email       String    @unique
+  role        Role      @default(USER)
+  accounts    Account[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  userId       String
+  type         AccountType   @default(CHECKING)
+  name         String
+  balanceCents Int           @default(0)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId, type])
+  @@index([userId])
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  accountId       String
+  amountCents     Int
+  transferId      String          @unique @default(cuid())
+  transactionDate DateTime        @default(now())
+  transactionNote String?
+  type            TransactionType @default(OTHER)
+  account         Account         @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([accountId])
+  @@index([transferId])
+  @@index([accountId, transactionDate])
 }
