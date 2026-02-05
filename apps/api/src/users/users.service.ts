@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../generated/prisma';
 import { AuthedRequestUser } from '../auth/firebase-auth.guard';
@@ -10,6 +15,8 @@ import {
 import {
   GetAllUsersQueryDto,
   GET_ALL_USERS_DEFAULTS,
+  SortableUserField,
+  SortOrder,
 } from './dto/get-all-users-query.dto';
 
 export interface GetOrCreateUserResult {
@@ -20,6 +27,14 @@ export interface GetOrCreateUserResult {
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+
+  private static readonly USER_SELECT_PUBLIC = {
+    id: true,
+    email: true,
+    role: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
 
   constructor(
     private prisma: PrismaService,
@@ -69,6 +84,7 @@ export class UsersService {
         return { user: this.toUserResponse(user), created: true };
       });
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       this.logger.error(
         `Failed to get or create user: ${email} (${firebaseUid})`,
         error,
@@ -85,13 +101,7 @@ export class UsersService {
 
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: UsersService.USER_SELECT_PUBLIC,
     });
 
     if (!user) {
@@ -99,7 +109,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return this.toUserResponse(user);
   }
 
   async getAllUsers(
@@ -113,13 +123,7 @@ export class UsersService {
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          createdAt: true,
-          updatedAt: true,
-          role: true,
-        },
+        select: UsersService.USER_SELECT_PUBLIC,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sortBy]: sortOrder } as const,
@@ -137,7 +141,12 @@ export class UsersService {
   }
 
   /** Apply defaults to optional query params so we always have resolved values. */
-  private resolveGetAllUsersQuery(query: GetAllUsersQueryDto) {
+  private resolveGetAllUsersQuery(query: GetAllUsersQueryDto): {
+    page: number;
+    limit: number;
+    sortBy: SortableUserField;
+    sortOrder: SortOrder;
+  } {
     return {
       page: query.page ?? GET_ALL_USERS_DEFAULTS.page,
       limit: query.limit ?? GET_ALL_USERS_DEFAULTS.limit,
