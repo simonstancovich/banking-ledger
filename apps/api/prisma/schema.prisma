@@ -27,6 +27,17 @@ enum TransactionType {
   OTHER
 }
 
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
+}
+
 model User {
   id          String    @id @default(cuid())
   firebaseUid String    @unique
@@ -54,18 +65,33 @@ model Account {
 }
 
 model Transaction {
-  id              String          @id @default(cuid())
+  id              String            @id @default(cuid())
   accountId       String
   amountCents     Int
-  transferId      String          @unique @default(cuid())
-  transactionDate DateTime        @default(now())
-  transactionNote String?
-  type            TransactionType @default(OTHER)
-  account         Account         @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  transferId      String            @default(cuid())
+  transactionDate DateTime          @default(now())
+  transactionNote String?           @default("") @db.VarChar(255)
+  status          TransactionStatus @default(PENDING)
+  errorMessage    String?
+  type            TransactionType   @default(OTHER)
+  account         Account           @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@index([accountId])
   @@index([transferId])
   @@index([accountId, transactionDate])
+  @@index([accountId, id])
+}
+
+model IdempotencyRecord {
+  id              String            @id @default(cuid())
+  userId          String
+  idempotencyKey  String
+  status          IdempotencyStatus
+  responsePayload Json?
+  createdAt       DateTime          @default(now())
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, idempotencyKey])
 }

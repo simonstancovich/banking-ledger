@@ -282,8 +282,8 @@ export const createApiClient = (config: ApiClientConfig) => {
                     });
                 }
               } else {
-                // No user or no config - just redirect
-                showToast('Session expired, please login again');
+                // No user (e.g. before Firebase restored, or signed out) - redirect without alarming toast
+                showToast('Please sign in to continue');
                 setTimeout(() => {
                   redirectToLogin();
                 }, 500);

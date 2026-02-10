@@ -69,14 +69,35 @@ export class UsersService {
   ): Promise<GetOrCreateUserResult> {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        const existingUser = await tx.user.findUnique({
+        const existingByUid = await tx.user.findUnique({
           where: { firebaseUid },
           select: UsersService.USER_SELECT_PUBLIC,
         });
 
-        return existingUser
-          ? this.handleExistingUser(tx, existingUser, email, firebaseUid)
-          : this.createNewUser(tx, firebaseUid, email);
+        if (existingByUid) {
+          return this.handleExistingUser(tx, existingByUid, email, firebaseUid);
+        }
+
+        const existingByEmail = await tx.user.findUnique({
+          where: { email },
+          select: UsersService.USER_SELECT_PUBLIC,
+        });
+
+        if (existingByEmail) {
+          await tx.user.update({
+            where: { id: existingByEmail.id },
+            data: { firebaseUid },
+          });
+          this.logger.log(
+            `Linked existing user by email: ${email} to Firebase UID ${firebaseUid}`,
+          );
+          return {
+            user: this.toUserResponse(existingByEmail),
+            created: false,
+          };
+        }
+
+        return this.createNewUser(tx, firebaseUid, email);
       });
     } catch (error) {
       if (error instanceof HttpException) throw error;

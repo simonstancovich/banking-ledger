@@ -128,6 +128,7 @@ export class AccountsService {
       await this.prisma.account.delete({ where: { id } });
       this.logger.log(`Deleted account: ${id}`);
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2025'
@@ -180,23 +181,7 @@ export class AccountsService {
     updateAccountDto: UpdateAccountDto,
   ): Promise<AccountResponseDto> {
     const data = this.resolveUpdateData(updateAccountDto);
-    try {
-      return await this.prisma.account.update({
-        where: { id, userId: authedUser.id },
-        data,
-        select: AccountsService.ACCOUNT_SELECT_RESPONSE,
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        this.logger.warn(`Account with id ${id} not found`);
-        throw new NotFoundException('Account not found');
-      }
-      this.logger.error(`Failed to update account: ${id}`, error);
-      throw error;
-    }
+    return this.performAccountUpdate({ id, userId: authedUser.id }, data);
   }
 
   private async updateAccountAsAdmin(
@@ -204,21 +189,29 @@ export class AccountsService {
     updateAccountDto: UpdateAccountDto,
   ): Promise<AccountResponseDto> {
     const data = this.resolveUpdateData(updateAccountDto);
+    return this.performAccountUpdate({ id }, data);
+  }
+
+  private async performAccountUpdate(
+    where: Prisma.AccountWhereUniqueInput,
+    data: Prisma.AccountUpdateInput,
+  ): Promise<AccountResponseDto> {
     try {
       return await this.prisma.account.update({
-        where: { id },
+        where,
         data,
         select: AccountsService.ACCOUNT_SELECT_RESPONSE,
       });
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2025'
       ) {
-        this.logger.warn(`Account with id ${id} not found`);
+        this.logger.warn(`Account with id ${where.id} not found`);
         throw new NotFoundException('Account not found');
       }
-      this.logger.error(`Failed to update account: ${id}`, error);
+      this.logger.error(`Failed to update account: ${where.id}`, error);
       throw error;
     }
   }

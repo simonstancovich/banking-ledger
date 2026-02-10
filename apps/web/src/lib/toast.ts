@@ -18,14 +18,20 @@ export interface ToastOptions {
 
 /**
  * Dynamic toast function that supports different modes and messages
- * 
+ *
  * @example
  * toast('User created successfully', { mode: 'success' });
  * toast('Failed to save', { mode: 'error', description: 'Please try again' });
  * toast('Session expiring soon', { mode: 'warning', duration: 5000 });
  */
 export function toast(message: string, options?: ToastOptions) {
-  const { mode = 'default', duration, description, action, cancel } = options || {};
+  const {
+    mode = 'default',
+    duration,
+    description,
+    action,
+    cancel,
+  } = options || {};
 
   const toastOptions = {
     duration,
@@ -39,7 +45,7 @@ export function toast(message: string, options?: ToastOptions) {
     cancel: cancel
       ? {
           label: cancel.label,
-          onClick: cancel.onClick,
+          onClick: cancel.onClick ?? (() => {}),
         }
       : undefined,
   };
@@ -60,17 +66,25 @@ export function toast(message: string, options?: ToastOptions) {
 }
 
 // Convenience functions for each mode
-export const toastSuccess = (message: string, options?: Omit<ToastOptions, 'mode'>) =>
-  toast(message, { ...options, mode: 'success' });
+export const toastSuccess = (
+  message: string,
+  options?: Omit<ToastOptions, 'mode'>,
+) => toast(message, { ...options, mode: 'success' });
 
-export const toastError = (message: string, options?: Omit<ToastOptions, 'mode'>) =>
-  toast(message, { ...options, mode: 'error' });
+export const toastError = (
+  message: string,
+  options?: Omit<ToastOptions, 'mode'>,
+) => toast(message, { ...options, mode: 'error' });
 
-export const toastWarning = (message: string, options?: Omit<ToastOptions, 'mode'>) =>
-  toast(message, { ...options, mode: 'warning' });
+export const toastWarning = (
+  message: string,
+  options?: Omit<ToastOptions, 'mode'>,
+) => toast(message, { ...options, mode: 'warning' });
 
-export const toastInfo = (message: string, options?: Omit<ToastOptions, 'mode'>) =>
-  toast(message, { ...options, mode: 'info' });
+export const toastInfo = (
+  message: string,
+  options?: Omit<ToastOptions, 'mode'>,
+) => toast(message, { ...options, mode: 'info' });
 
 // Promise-based toast (shows loading, then success/error)
 export function toastPromise<T>(

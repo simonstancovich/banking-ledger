@@ -10,10 +10,53 @@ import { LoadingButton } from '@/components/LoadingButton';
 /** Firebase succeeded but our API (DB) call failed or was never completed */
 const DB_SYNC_FAILED = 'DB_SYNC_FAILED';
 
+function EyeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
 export default function RegisterPage() {
   const r = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   /** User is signed in to Firebase but not yet in our DB — show "Go to login" / "Retry" */
   const [firebaseOkDbPending, setFirebaseOkDbPending] = useState(false);
@@ -23,9 +66,42 @@ export default function RegisterPage() {
     return re.test(email);
   };
 
-  const validatePassword = (password: string) => {
-    return password.length >= 6;
-  };
+  const MIN_LENGTH = 8;
+  const PASSWORD_REQUIREMENTS =
+    'Use at least 8 characters with an uppercase letter, lowercase letter, number and symbol.';
+
+  function validatePassword(
+    password: string,
+  ): { valid: true } | { valid: false; message: string } {
+    if (password.length < MIN_LENGTH) {
+      return {
+        valid: false,
+        message: 'Password must be at least 8 characters.',
+      };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return {
+        valid: false,
+        message: 'Password must include an uppercase letter.',
+      };
+    }
+    if (!/[a-z]/.test(password)) {
+      return {
+        valid: false,
+        message: 'Password must include a lowercase letter.',
+      };
+    }
+    if (!/\d/.test(password)) {
+      return { valid: false, message: 'Password must include a number.' };
+    }
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+      return {
+        valid: false,
+        message: 'Password must include a symbol (e.g. !@#$%).',
+      };
+    }
+    return { valid: true };
+  }
 
   /** Call our API to create/update user (used after Firebase sign-in and for retry) */
   async function syncUserToDb(): Promise<boolean> {
@@ -50,8 +126,15 @@ export default function RegisterPage() {
       toastError('Invalid email address');
       return;
     }
-    if (!validatePassword(password)) {
-      toastWarning('Password should be at least 6 characters');
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
+      toastWarning(passwordCheck.message, {
+        description: PASSWORD_REQUIREMENTS,
+      });
+      return;
+    }
+    if (password !== confirmPassword) {
+      toastError('Passwords do not match');
       return;
     }
 
@@ -94,7 +177,9 @@ export default function RegisterPage() {
           description: 'Please use a different email or try logging in',
         });
       } else if (err.code === 'auth/weak-password') {
-        toastWarning('Password should be at least 6 characters');
+        toastWarning('Password too weak', {
+          description: PASSWORD_REQUIREMENTS,
+        });
       } else if (err.code === 'auth/invalid-email') {
         toastError('Invalid email address');
       } else {
@@ -159,18 +244,51 @@ export default function RegisterPage() {
         <>
           <form onSubmit={onSubmit} className="space-y-3">
             <input
-              className="w-full rounded border p-2"
-              placeholder="Email"
+              className="w-full rounded border border-gray-300 p-2 dark:border-gray-600 dark:bg-gray-800"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <input
-              className="w-full rounded border p-2"
-              placeholder="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                className="w-full rounded border border-gray-300 p-2 pr-10 dark:border-gray-600 dark:bg-gray-800"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="8+ chars, upper, lower, number, symbol"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                className="w-full rounded border border-gray-300 p-2 pr-10 dark:border-gray-600 dark:bg-gray-800"
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="Repeat your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                aria-label={
+                  showConfirmPassword ? 'Hide password' : 'Show password'
+                }
+              >
+                {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
 
             <LoadingButton
               className="w-full rounded bg-black text-white p-2"

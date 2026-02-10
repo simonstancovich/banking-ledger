@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -7,7 +7,7 @@ import { AuthorizationService } from './authorization.service';
 import { FirebaseAdminModule } from './firebase-admin.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, FirebaseAdminModule],
+  imports: [forwardRef(() => UsersModule), PrismaModule, FirebaseAdminModule],
   providers: [FirebaseAuthGuard, AuthorizationService],
   controllers: [AuthController],
   exports: [FirebaseAuthGuard, AuthorizationService],

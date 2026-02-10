@@ -8,7 +8,7 @@ import {
 import { Request } from 'express';
 import { FirebaseAdminService } from './firebase-admin';
 import { Role } from '../generated/prisma';
-import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 
 export type AuthedRequestUser = {
   firebaseUid: string;
@@ -31,7 +31,7 @@ export class FirebaseAuthGuard implements CanActivate {
 
   constructor(
     private firebaseAdmin: FirebaseAdminService,
-    private prisma: PrismaService,
+    private usersService: UsersService,
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -47,31 +47,23 @@ export class FirebaseAuthGuard implements CanActivate {
     try {
       const decoded = await this.firebaseAdmin.verifyIdToken(token);
 
-      const dbUser = await this.prisma.user.findUnique({
-        where: { firebaseUid: decoded.uid },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-        },
-      });
-
-      if (!dbUser) {
-        this.logger.warn('User not found in database');
-        throw new UnauthorizedException('User not found in database');
-      }
-
       const email = decoded.email;
       if (!email) {
         this.logger.warn('Email not found in token');
         throw new UnauthorizedException('Email not found in token');
       }
 
+      // Always sync: create DB user if missing (e.g. first login after Firebase signup)
+      const result = await this.usersService.getOrCreateUser(
+        decoded.uid,
+        email,
+      );
+
       req.user = {
         firebaseUid: decoded.uid,
-        email: dbUser.email,
-        id: dbUser.id,
-        role: dbUser.role,
+        email: result.user.email,
+        id: result.user.id,
+        role: result.user.role,
       };
 
       return true;

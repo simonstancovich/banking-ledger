@@ -10,6 +10,14 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { AccountType } from '../../generated/prisma';
 
+/** Runtime enum object for class-validator (IsEnum needs a plain object at load time). */
+const AccountTypeEnum: Record<string, string> = {
+  CHECKING: 'CHECKING',
+  SAVINGS: 'SAVINGS',
+  CREDIT_CARD: 'CREDIT_CARD',
+  OTHER: 'OTHER',
+};
+
 export class CreateAccountDto {
   @ApiProperty({
     description: 'Account name',
@@ -22,11 +30,11 @@ export class CreateAccountDto {
   @ApiPropertyOptional({
     description: 'Account type',
     example: 'CHECKING',
-    enum: AccountType,
+    enum: AccountTypeEnum,
   })
   @IsOptional()
-  @IsEnum(AccountType)
-  @Transform(({ value }) => value ?? AccountType.CHECKING)
+  @IsEnum(AccountTypeEnum)
+  @Transform(({ value }) => value ?? 'CHECKING')
   type?: AccountType;
 
   @ApiPropertyOptional({
